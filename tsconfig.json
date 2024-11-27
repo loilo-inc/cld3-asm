@@ -2,7 +2,6 @@
   "compilerOptions": {
     "preserveConstEnums": true,
     "sourceMap": true,
-    "suppressImplicitAnyIndexErrors": true,
     "strictNullChecks": true,
     "noUnusedLocals": true,
     "noImplicitAny": true,
@@ -14,8 +13,6 @@
     "noEmit": true,
     "target": "es2018",
     "outDir": "dist",
-    "lib": [
-      "es2016"
-    ]
+    "lib": ["es2016"]
   }
 }
