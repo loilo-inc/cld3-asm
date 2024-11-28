@@ -30,3 +30,5 @@ RUN emmake make \
   PROTOBUF_LIBS='-L/src/protobuf -lprotobuf-lite' libcld3.a
 RUN em++ libcld3.a
 ADD ./build/build.sh /src/cld3/src/
+ARG TSC_VERSION="5.7.2"
+RUN npm install -g typescript@$TSC_VERSION

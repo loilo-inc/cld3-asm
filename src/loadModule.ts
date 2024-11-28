@@ -1,16 +1,16 @@
-import { CldAsmModule } from "./cldAsmModule";
-import { CldFactory } from "./cldFactory";
+import type { CldAsmRuntime } from "./cldAsmModule";
+import type { CldFactory } from "./cldFactory";
 import { cldLoader } from "./cldLoader";
+import type { MainModule } from "./lib/node/cld3";
 
 export async function loadModule({
   runtime,
+  logger,
 }: {
-  runtime: ({}: { onRuntimeInitialized: () => void }) => CldAsmModule;
+  logger?: Console;
+  runtime: CldAsmRuntime;
 }): Promise<CldFactory> {
-  const instance = await new Promise<CldAsmModule>((resolve) => {
-    const v = runtime({
-      onRuntimeInitialized: () => resolve(v),
-    });
+  return runtime().then((Module: MainModule) => {
+    return cldLoader(Module, logger);
   });
-  return cldLoader(instance);
 }

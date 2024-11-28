@@ -1,18 +1,40 @@
 {
-  "name": "cld3-asm",
-  "version": "4.0.0",
-  "description": "WebAssembly based Javascript bindings for google compact language detector 3",
-  "main": "./dist/cjs/index.js",
+  "name": "@loilo-inc/cld3-asm",
   "type": "module",
-  "types": "./dist/types/index.d.ts",
-  "config": {
-    "cld3-version": "4d0870c-231231"
-  },
+  "types": "./dist/index.d.ts",
+  "main": "./dist/index.js",
   "scripts": {
-    "setup": "node --import tsx bootstrap.ts"
+    "test": "vitest run",
+    "fmt": "prettier --write src",
+    "fmtcheck": "prettier --check src"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    },
+    "./src/lib/node/cld3.js": {
+      "import": "./dist/lib/node/cld3.js",
+      "types": "./src/lib/node/cld3.d.ts"
+    },
+    "./src/lib/web/cld3.js": {
+      "import": "./dist/lib/web/cld3.js",
+      "types": "./src/lib/web/cld3.d.ts"
+    },
+    "./src/lib/worker/cld3.js": {
+      "import": "./dist/lib/worker/cld3.js",
+      "types": "./src/lib/worker/cld3.d.ts"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loilo-inc/cld3-asm.git"
   },
   "license": "MIT",
   "devDependencies": {
+    "@types/emscripten": "^1.39.13",
     "@types/node": "^22",
     "@types/shelljs": "^0.8.15",
     "esbuild": "^0.24.0",
@@ -21,8 +43,5 @@
     "tsx": "^4.19.2",
     "typescript": "^5",
     "vitest": "^2.1.6"
-  },
-  "dependencies": {
-    "emscripten-wasm-loader": "^3.0.3"
   }
 }

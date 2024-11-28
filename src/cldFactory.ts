@@ -1,6 +1,6 @@
-import { LanguageResult } from './cldAsmModule';
+import type { LanguageResult } from "./cldAsmModule";
 
-interface LanguageIdentifier {
+export interface LanguageIdentifier {
   /**
    * Finds the most likely language for the given text, along with additional
    * information (e.g., probability). The prediction is based on the first N
@@ -31,7 +31,10 @@ interface LanguageIdentifier {
    * @return {Array<Readonly<LanguageResult>>} Array of detected language result.
    * If detected languages are less than {numLangs} specified, array will include only detected langauges.
    */
-  findMostFrequentLanguages: (text: string, numLangs: number) => Array<Readonly<LanguageResult>>;
+  findMostFrequentLanguages: (
+    text: string,
+    numLangs: number,
+  ) => Array<Readonly<LanguageResult>>;
 
   /**
    * Destroy current instance of language identifier.
@@ -39,7 +42,7 @@ interface LanguageIdentifier {
   dispose: () => void;
 }
 
-interface CldFactory {
+export interface CldFactory {
   /**
    * Creates new instance of language identifier.
    * @param {number} minBytes Minimum bytes required to make prediction. 140 by default.
@@ -47,5 +50,3 @@ interface CldFactory {
    */
   create(minBytes?: number, maxBytes?: number): LanguageIdentifier;
 }
-
-export { LanguageIdentifier, CldFactory };

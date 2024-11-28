@@ -3,13 +3,16 @@
     "preserveConstEnums": true,
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
     "allowJs": true,
     "strict": true,
     "module": "ES2020",
     "moduleResolution": "bundler",
-    "noEmit": true,
-    "target": "es2018",
+    "declaration": true,
+    "target": "ES2020",
     "outDir": "dist",
-    "lib": ["es2016"]
-  }
+    "lib": ["ES2020"]
+  },
+  "include": ["src/"]
 }
