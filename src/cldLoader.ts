@@ -1,7 +1,7 @@
-import { CldAsmModule, LanguageResult } from "./cldAsmModule";
-import { CldFactory } from "./cldFactory";
+import type { LanguageResult } from "./cldAsmModule";
+import type { CldFactory } from "./cldFactory";
 import { LanguageCode } from "./languageCode";
-import { log } from "./util/logger";
+import type { MainModule } from "./lib/node/cld3";
 import { wrapCldInterface } from "./wrapCldInterface";
 
 // size of pointer to calculate pointer position.
@@ -16,7 +16,10 @@ const PTR_SIZE = 4;
  *
  * @returns {CldFactory} Factory function manages lifecycle of cld3 language identifier.
  */
-export const cldLoader = (asmModule: CldAsmModule): CldFactory => {
+export const cldLoader = (
+  asmModule: MainModule,
+  logger?: Console
+): CldFactory => {
   const {
     cwrap,
     _free,
@@ -52,7 +55,7 @@ export const cldLoader = (asmModule: CldAsmModule): CldFactory => {
   const maxBytesInput = cldInterface.getMaxNumBytesInput();
   const languageResultStructSize = cldInterface.sizeLanguageResult();
 
-  log(`cldLoader: cld3 wasm initialized with default values`, {
+  logger?.log(`cldLoader: cld3 wasm initialized with default values`, {
     unknownIdentifier,
     minBytesDefault,
     maxBytesDefault,
