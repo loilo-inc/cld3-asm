@@ -8,6 +8,9 @@
     "fmt": "prettier --write src",
     "fmtcheck": "prettier --check src"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js"
