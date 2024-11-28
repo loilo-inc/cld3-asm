@@ -1,4 +1,4 @@
-mkdir -p ${OUTDIR}
+mkdir -p ${OUTDIR}/${ENVIRONMENT}
 CONTAINER_ID=${IMAGE}-$(date +%s)
 docker run --name ${CONTAINER_ID} -t ${IMAGE} /bin/bash -l -c \
   "SRCDIR=/src ./build.sh -o /src/cld3.js -s ENVIRONMENT=${ENVIRONMENT}"

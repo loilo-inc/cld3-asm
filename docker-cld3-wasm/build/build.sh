@@ -10,6 +10,8 @@ echo "building binary for $@"
 
 # functions to be exported from cld3
 CLD_EXPORT_FUNCTIONS="[\
+'_malloc',\
+'_free',\
 '_get_SizeLanguageResult',\
 '_get_UnknownIdentifier',\
 '_get_MinNumBytesDefault',\
