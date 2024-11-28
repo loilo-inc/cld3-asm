@@ -1,5 +1,5 @@
-import { BaseAsmModule } from 'emscripten-wasm-loader';
-import { LanguageCode } from './languageCode';
+import { BaseAsmModule } from "emscripten-wasm-loader";
+import { LanguageCode } from "./languageCode";
 
 /**
  * Holds probability that Span, specified by start/end indices, is a given
@@ -44,6 +44,10 @@ export interface LanguageResult {
  */
 export interface CldAsmModule extends Required<BaseAsmModule> {
   allocateUTF8: (str: string) => number;
-  setValue: (ptr: number, value: any, type: 'i8' | 'i16' | 'i32' | 'i64' | 'float' | 'double' | '*') => void;
+  setValue: (
+    ptr: number,
+    value: any,
+    type: "i8" | "i16" | "i32" | "i64" | "float" | "double" | "*"
+  ) => void;
   initializeRuntime(): Promise<boolean>;
 }

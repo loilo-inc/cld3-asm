@@ -1,8 +1,8 @@
-import { CldAsmModule, LanguageResult } from './cldAsmModule';
-import { CldFactory } from './cldFactory';
-import { LanguageCode } from './languageCode';
-import { log } from './util/logger';
-import { wrapCldInterface } from './wrapCldInterface';
+import { CldAsmModule, LanguageResult } from "./cldAsmModule";
+import { CldFactory } from "./cldFactory";
+import { LanguageCode } from "./languageCode";
+import { log } from "./util/logger";
+import { wrapCldInterface } from "./wrapCldInterface";
 
 // size of pointer to calculate pointer position.
 const PTR_SIZE = 4;
@@ -17,19 +17,31 @@ const PTR_SIZE = 4;
  * @returns {CldFactory} Factory function manages lifecycle of cld3 language identifier.
  */
 export const cldLoader = (asmModule: CldAsmModule): CldFactory => {
-  const { cwrap, _free, allocateUTF8, _malloc, getValue, UTF8ToString, setValue } = asmModule;
+  const {
+    cwrap,
+    _free,
+    allocateUTF8,
+    _malloc,
+    getValue,
+    UTF8ToString,
+    setValue,
+  } = asmModule;
   const cldInterface = wrapCldInterface(cwrap);
 
   /**
    * Naive auto-dispose interface to call cld interface with string params.
    *
    */
-  const usingParamPtr = <T = void>(...args: Array<string | ((...args: Array<number>) => T)>): T => {
-    const params = [...args];
-    const fn = params.pop()!;
-    const paramsPtr = params.map((param: string) => allocateUTF8(param));
+  const usingParamPtr = <T = void>({
+    fn,
+    params,
+  }: {
+    fn: (...args: Array<number>) => T;
+    params: string[];
+  }): T => {
+    const paramsPtr = params.map((param) => allocateUTF8(param));
     const ret = (fn as Function)(...paramsPtr);
-    paramsPtr.forEach(paramPtr => _free(paramPtr));
+    paramsPtr.forEach((paramPtr) => _free(paramPtr));
     return ret;
   };
 
@@ -45,12 +57,14 @@ export const cldLoader = (asmModule: CldAsmModule): CldFactory => {
     minBytesDefault,
     maxBytesDefault,
     maxBytesInput,
-    languageResultStructSize
+    languageResultStructSize,
   });
 
   // both identifier should match all time, check when initialize binary
   if (unknownIdentifier !== LanguageCode.UNKNOWN) {
-    throw new Error(`cld3 binary unknownIdentifier constant does not match to LanguageCode enum`);
+    throw new Error(
+      `cld3 binary unknownIdentifier constant does not match to LanguageCode enum`
+    );
   }
 
   /**
@@ -59,11 +73,11 @@ export const cldLoader = (asmModule: CldAsmModule): CldFactory => {
    */
   const volatileReadSpanInfoArray = (arrayPtr: number, size: number) => {
     const ret = Array.from(new Array(size)).map((_, idx) => {
-      const spanInfoPtr = getValue(arrayPtr + PTR_SIZE * idx, '*');
+      const spanInfoPtr = getValue(arrayPtr + PTR_SIZE * idx, "*");
       const range = {
-        start_index: getValue(spanInfoPtr + PTR_SIZE * 0, 'i8'),
-        end_index: getValue(spanInfoPtr + PTR_SIZE * 1, 'i8'),
-        probability: getValue(spanInfoPtr + PTR_SIZE * 2, 'float')
+        start_index: getValue(spanInfoPtr + PTR_SIZE * 0, "i8"),
+        end_index: getValue(spanInfoPtr + PTR_SIZE * 1, "i8"),
+        probability: getValue(spanInfoPtr + PTR_SIZE * 2, "float"),
       };
 
       //free each individual SpanInfo* struct
@@ -84,19 +98,22 @@ export const cldLoader = (asmModule: CldAsmModule): CldFactory => {
    */
   const volatileReadResultStruct = (structPtr: number) => {
     // get value of first field of LanguageResult struct (char*)
-    const languageStringPtr = getValue(structPtr + PTR_SIZE * 0, '*');
+    const languageStringPtr = getValue(structPtr + PTR_SIZE * 0, "*");
 
     // get ptr to array of byte range with its size
-    const byteRangesSize = getValue(structPtr + PTR_SIZE * 4, 'i8');
-    const byteRangesArrayPtr = getValue(structPtr + PTR_SIZE * 5, '*');
+    const byteRangesSize = getValue(structPtr + PTR_SIZE * 4, "i8");
+    const byteRangesArrayPtr = getValue(structPtr + PTR_SIZE * 5, "*");
 
     // be careful to match order of properties to match pointer to struct field.
     const ret: LanguageResult = {
       language: UTF8ToString(languageStringPtr) as LanguageCode,
-      probability: getValue(structPtr + PTR_SIZE * 1, 'float'),
-      is_reliable: !!getValue(structPtr + PTR_SIZE * 2, 'i8'),
-      proportion: getValue(structPtr + PTR_SIZE * 3, 'float'),
-      byte_ranges: volatileReadSpanInfoArray(byteRangesArrayPtr, byteRangesSize)
+      probability: getValue(structPtr + PTR_SIZE * 1, "float"),
+      is_reliable: !!getValue(structPtr + PTR_SIZE * 2, "i8"),
+      proportion: getValue(structPtr + PTR_SIZE * 3, "float"),
+      byte_ranges: volatileReadSpanInfoArray(
+        byteRangesArrayPtr,
+        byteRangesSize
+      ),
     };
 
     //free char* for language string
@@ -108,14 +125,21 @@ export const cldLoader = (asmModule: CldAsmModule): CldFactory => {
   };
 
   return {
-    create: (minBytes: number = minBytesDefault, maxBytes: number = maxBytesDefault) => {
+    create: (
+      minBytes: number = minBytesDefault,
+      maxBytes: number = maxBytesDefault
+    ) => {
       const cldPtr = cldInterface.create(minBytes, maxBytes);
 
       return {
         findLanguage: (text: string) => {
           // `findLanguage` requires caller must allocate memory for return value.
           const resultPtr = _malloc(languageResultStructSize);
-          usingParamPtr(text, textPtr => cldInterface.findLanguage(cldPtr, textPtr, resultPtr));
+          usingParamPtr({
+            fn: (textPtr) =>
+              cldInterface.findLanguage(cldPtr, textPtr, resultPtr),
+            params: [text],
+          });
           return volatileReadResultStruct(resultPtr);
         },
         findMostFrequentLanguages: (text: string, numLangs: number) => {
@@ -130,25 +154,32 @@ export const cldLoader = (asmModule: CldAsmModule): CldFactory => {
             const resultPtr = _malloc(languageResultStructSize);
             resultStructsPtr.push(resultPtr);
             // fill in array with allocated struct ptr
-            setValue(languageListPtr + idx * PTR_SIZE, resultPtr, '*');
+            setValue(languageListPtr + idx * PTR_SIZE, resultPtr, "*");
           }
 
-          const languageCount = usingParamPtr(text, textPtr =>
-            cldInterface.findTopNMostFreqLangs(cldPtr, textPtr, numLangs, languageListPtr)
-          );
+          const languageCount = usingParamPtr({
+            fn: (textPtr) =>
+              cldInterface.findTopNMostFreqLangs(
+                cldPtr,
+                textPtr,
+                numLangs,
+                languageListPtr
+              ),
+            params: [text],
+          });
 
           // if `numLangs` exceeds number of languages detected rest of array will be filled with default result with unknown language identifier
           const ret = resultStructsPtr
-            .map(ptr => volatileReadResultStruct(ptr))
-            .filter(x => x.language !== unknownIdentifier);
+            .map((ptr) => volatileReadResultStruct(ptr))
+            .filter((x) => x.language !== unknownIdentifier);
 
           // each LanguageResult struct is freed via `volatileReadResultStruct` already. delete allocated memory for array itself.
           _free(languageListPtr);
 
           return languageCount > 0 ? ret : [];
         },
-        dispose: () => cldInterface.destroy(cldPtr)
+        dispose: () => cldInterface.destroy(cldPtr),
       };
-    }
+    },
   };
 };

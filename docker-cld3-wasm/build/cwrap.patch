@@ -1,0 +1,156 @@
+diff --git a/src/nnet_language_identifier.cc b/src/nnet_language_identifier.cc
+index c1fa755..1d0c1df 100644
+--- a/src/nnet_language_identifier.cc
++++ b/src/nnet_language_identifier.cc
+@@ -386,3 +386,88 @@ string NNetLanguageIdentifier::SelectTextGivenBeginAndSize(
+ }
+ 
+ }  // namespace chrome_lang_id
++
++namespace {
++
++// Assign Result value to LanguageResult struct, allow js interop pointer to its values.
++// Function does not allocate memory of LanguageResult by itself - caller (findLanguage, findTopNMostFreqLangs)
++// in javascript must allocate. In opposite, pointers to string, arrays are allocated internally and must be freed.
++void allocate_result(chrome_lang_id::NNetLanguageIdentifier::Result result, LanguageResult* out_result) {
++  char * cstr = (char *) malloc(result.language.length()+1);
++  std::strcpy (cstr, result.language.c_str());
++
++  out_result->is_reliable = result.is_reliable;
++  out_result->probability = result.probability;
++  out_result->proportion = result.proportion;
++  out_result->language = cstr;
++  out_result->byte_ranges_size = result.byte_ranges.size();
++
++  chrome_lang_id::NNetLanguageIdentifier::SpanInfo** ranges =
++          (chrome_lang_id::NNetLanguageIdentifier::SpanInfo **)
++          malloc(sizeof(chrome_lang_id::NNetLanguageIdentifier::SpanInfo) * result.byte_ranges.size());
++
++  for (auto i = 0; i < result.byte_ranges.size(); i++) {
++      chrome_lang_id::NNetLanguageIdentifier::SpanInfo* range = (chrome_lang_id::NNetLanguageIdentifier::SpanInfo *)
++              malloc(sizeof(chrome_lang_id::NNetLanguageIdentifier::SpanInfo));
++
++      memcpy(range, &result.byte_ranges[i],sizeof(*range));
++      ranges[i] = range;
++  }
++
++  out_result->byte_ranges = ranges;
++}
++
++// Flatten std::vector<Result> to Array<LanguageResult>. Same as `allocate_result`, javascript caller must
++// allocate memory.
++int munge_vector(const std::vector<chrome_lang_id::NNetLanguageIdentifier::Result>& items, LanguageResult** out_results) {
++  if (items.empty()) {
++    return 0;
++  } else {
++    for (size_t i = 0; i < items.size(); ++i) {
++      allocate_result(items[i], out_results[i]);
++    }
++  }
++  return items.size();
++}
++
++}
++
++int get_SizeLanguageResult() {
++    return sizeof(LanguageResult);
++}
++
++const char* get_UnknownIdentifier() {
++  return chrome_lang_id::NNetLanguageIdentifier::kUnknown;
++}
++
++int get_MinNumBytesDefault() {
++  return chrome_lang_id::NNetLanguageIdentifier::kMinNumBytesToConsider;
++}
++
++int get_MaxNumBytesDefault() {
++  return chrome_lang_id::NNetLanguageIdentifier::kMaxNumBytesToConsider;
++}
++
++int get_MaxNumBytesInput() {
++  return chrome_lang_id::NNetLanguageIdentifier::kMaxNumInputBytesToConsider;
++}
++
++CldHandle* Cld_create(int min_num_bytes, int max_num_bytes) {
++  return reinterpret_cast<CldHandle*>(new chrome_lang_id::NNetLanguageIdentifier(min_num_bytes, max_num_bytes));
++}
++
++void Cld_destroy(CldHandle* pCld) {
++    delete reinterpret_cast<chrome_lang_id::NNetLanguageIdentifier*>(pCld);
++}
++
++void Cld_findLanguage(CldHandle* pCld, const char* text, LanguageResult* out_result) {
++  chrome_lang_id::NNetLanguageIdentifier::Result result =
++          reinterpret_cast<chrome_lang_id::NNetLanguageIdentifier*>(pCld)->FindLanguage(text);
++
++  allocate_result(result, out_result);
++}
++
++int Cld_findTopNMostFreqLangs(CldHandle* pCld, const char* text, int num_langs, LanguageResult** out_results) {
++    std::vector<chrome_lang_id::NNetLanguageIdentifier::Result> results = reinterpret_cast<chrome_lang_id::NNetLanguageIdentifier*>(pCld)->FindTopNMostFreqLangs(text, num_langs);
++    return munge_vector(results, out_results);
++}
+diff --git a/src/nnet_language_identifier.h b/src/nnet_language_identifier.h
+index e5eb862..b17d8a6 100644
+--- a/src/nnet_language_identifier.h
++++ b/src/nnet_language_identifier.h
+@@ -189,3 +189,57 @@ class NNetLanguageIdentifier {
+ }  // namespace chrome_lang_id
+ 
+ #endif  // NNET_LANGUAGE_IDENTIFIER_H_
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#ifndef CLD_VISIBILITY_H
++#define CLD_VISIBILITY_H
++  #define LIBCLD_DLL_EXPORTED __attribute__((__visibility__("default")))
++#endif
++
++typedef struct CldHandle CldHandle;
++
++// C style struct to chrome_lang_id::NNetLanguageIdentifier::Result to allow
++// easy interop from javascript.
++typedef struct {
++    char* language = NULL;
++    float probability = 0.0;
++    bool is_reliable = false;
++    float proportion = 0.0;
++    int byte_ranges_size = 0;
++    chrome_lang_id::NNetLanguageIdentifier::SpanInfo** byte_ranges = NULL;
++} LanguageResult;
++
++// return sizeof(LanguageResult) for pointer interop
++LIBCLD_DLL_EXPORTED int get_SizeLanguageResult();
++
++// static const char kUnknown[];
++LIBCLD_DLL_EXPORTED const char* get_UnknownIdentifier();
++
++// static const int kMinNumBytesToConsider;
++LIBCLD_DLL_EXPORTED int get_MinNumBytesDefault();
++
++//static const int kMaxNumBytesToConsider;
++LIBCLD_DLL_EXPORTED int get_MaxNumBytesDefault();
++
++//static const int kMaxNumInputBytesToConsider;
++LIBCLD_DLL_EXPORTED int get_MaxNumBytesInput();
++
++LIBCLD_DLL_EXPORTED CldHandle* Cld_create(int min_num_bytes, int max_num_bytes);
++
++LIBCLD_DLL_EXPORTED void Cld_destroy(CldHandle* pCld);
++
++// Result FindLanguage(const string &text);
++// Call `FindLanguage`. `out_result` must be allocated / freed by caller.
++LIBCLD_DLL_EXPORTED void Cld_findLanguage(CldHandle* pCld, const char* text, LanguageResult* out_result);
++
++//std::vector<Result> FindTopNMostFreqLangs(const string &text, int num_langs);
++// Call `FindTopNMostFreqLangs`. `out_results` must be allocated / freed by caller.
++// `FindTopNMostFreqLangs` returns predictable length of return value (max to num_langs).
++LIBCLD_DLL_EXPORTED int Cld_findTopNMostFreqLangs(CldHandle* pCld, const char* text, int num_langs, LanguageResult** out_results);
++
++#ifdef __cplusplus
++}
++#endif
+\ No newline at end of file

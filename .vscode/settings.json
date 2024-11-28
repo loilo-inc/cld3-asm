@@ -8,5 +8,16 @@
     "node_modules": true,
     "dist": true
   },
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "*.ts": "${capture}.test.ts, ${capture}.*.test.ts",
+    "*.tsx": "${capture}.test.tsx, ${capture}.*.test.tsx",
+    "eslint.config.mjs": ".eslint*",
+    ".env.example": ".env",
+    "compose.yml": "compose.*.yml",
+    "tsconfig.json": "tsconfig.*.json",
+    "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb"
+  },
   "typescript.tsdk": "node_modules\\typescript\\lib"
 }
