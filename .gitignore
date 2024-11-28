@@ -8,9 +8,6 @@
 node_modules/
 typings/
 
-# Wasm binary
-src/lib/*
-
 # Generated
 dist/
 tmp/
