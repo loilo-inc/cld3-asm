@@ -13,7 +13,8 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     },
     "./src/lib/node/cld3.js": {
       "import": "./dist/lib/node/cld3.js",
