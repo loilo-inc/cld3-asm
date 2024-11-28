@@ -18,7 +18,7 @@ const PTR_SIZE = 4;
  */
 export const cldLoader = (
   asmModule: MainModule,
-  logger?: Console
+  logger?: Console,
 ): CldFactory => {
   const {
     cwrap,
@@ -66,7 +66,7 @@ export const cldLoader = (
   // both identifier should match all time, check when initialize binary
   if (unknownIdentifier !== LanguageCode.UNKNOWN) {
     throw new Error(
-      `cld3 binary unknownIdentifier constant does not match to LanguageCode enum`
+      `cld3 binary unknownIdentifier constant does not match to LanguageCode enum`,
     );
   }
 
@@ -115,7 +115,7 @@ export const cldLoader = (
       proportion: getValue(structPtr + PTR_SIZE * 3, "float"),
       byte_ranges: volatileReadSpanInfoArray(
         byteRangesArrayPtr,
-        byteRangesSize
+        byteRangesSize,
       ),
     };
 
@@ -130,7 +130,7 @@ export const cldLoader = (
   return {
     create: (
       minBytes: number = minBytesDefault,
-      maxBytes: number = maxBytesDefault
+      maxBytes: number = maxBytesDefault,
     ) => {
       const cldPtr = cldInterface.create(minBytes, maxBytes);
 
@@ -166,7 +166,7 @@ export const cldLoader = (
                 cldPtr,
                 textPtr,
                 numLangs,
-                languageListPtr
+                languageListPtr,
               ),
             params: [text],
           });

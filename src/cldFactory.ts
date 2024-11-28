@@ -33,7 +33,7 @@ export interface LanguageIdentifier {
    */
   findMostFrequentLanguages: (
     text: string,
-    numLangs: number
+    numLangs: number,
   ) => Array<Readonly<LanguageResult>>;
 
   /**
