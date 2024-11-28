@@ -46,5 +46,5 @@ em++ \
 -s NODEJS_CATCH_EXIT=0 \
 -s NODEJS_CATCH_REJECTION=0 \
 ./libcld3.a \
-/workspace/protobuf/libprotobuf-lite.a \
+${SRCDIR}/protobuf/libprotobuf-lite.a \
 $@
